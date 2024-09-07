@@ -10,13 +10,16 @@ public class IntentItem {
     private final SimpleStringProperty destinationPackage;
     private final SimpleStringProperty destinationClass;
     private final SimpleBooleanProperty targetIsExported;
+    private final SimpleStringProperty source;
 
-    public IntentItem(int index, String description, String destinationPackage, String destinationClass, Boolean exported) {
+    public IntentItem(int index, String description, String destinationPackage, String destinationClass,
+            Boolean exported, String source) {
         this.index = new SimpleIntegerProperty(index);
         this.description = new SimpleStringProperty(description);
         this.targetIsExported = new SimpleBooleanProperty(exported);
         this.destinationPackage = new SimpleStringProperty(destinationPackage);
         this.destinationClass = new SimpleStringProperty(destinationClass);
+        this.source = new SimpleStringProperty(source);
     }
 
     public int getIndex() {
@@ -31,14 +34,13 @@ public class IntentItem {
         return targetIsExported.get();
     }
 
-    public SimpleBooleanProperty targetIsExportedProperty(){
+    public SimpleBooleanProperty targetIsExportedProperty() {
         return targetIsExported;
     }
 
     public SimpleIntegerProperty indexProperty() {
         return index;
     }
-
 
     public SimpleStringProperty descriptionProperty() {
         return description;
@@ -50,5 +52,9 @@ public class IntentItem {
 
     public SimpleStringProperty destinationClassProperty() {
         return destinationClass;
+    }
+
+    public SimpleStringProperty source() {
+        return source;
     }
 }

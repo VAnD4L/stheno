@@ -65,6 +65,11 @@
                   <PropertyValueFactory property="targetIsExported"/>
                 </cellValueFactory>
               </TableColumn>
+              <TableColumn fx:id="sourceColumn"  text="source">
+                <cellValueFactory>
+                  <PropertyValueFactory property="source"/>
+                </cellValueFactory>
+              </TableColumn>
             </columns>
           </TableView>
         </children>

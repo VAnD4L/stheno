@@ -32,8 +32,6 @@ import java.util.ResourceBundle;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-
 public class MainScreenController implements Initializable {
     @FXML
     private TableView<IntentItem> intentTableView;
@@ -47,6 +45,8 @@ public class MainScreenController implements Initializable {
     private TableColumn<IntentItem, String> destinationClassColumn;
     @FXML
     private TableColumn<IntentItem, Boolean> isExportedColumn;
+    @FXML
+    private TableColumn<IntentItem, Boolean> sourceColumn;
     @FXML
     private MenuItem startMonitor;
     @FXML
@@ -84,11 +84,15 @@ public class MainScreenController implements Initializable {
         isExportedColumn.setPrefWidth(120);
         isExportedColumn.setStyle("-fx-alignment: CENTER;");
 
+        sourceColumn.setPrefWidth(150);
+        sourceColumn.setStyle("-fx-alignment: CENTER;");
+
         intentTableView.setItems(intentsList);
         socketClient = new SocClient(this);
         startMonitor.disableProperty().bind(socketClient.connectedProperty());
         stopMonitor.disableProperty().bind(socketClient.connectedProperty().not());
-        socketClient.connectedProperty().addListener((observable, oldValue, newValue) -> updateConnectionStatus(newValue));
+        socketClient.connectedProperty()
+                .addListener((observable, oldValue, newValue) -> updateConnectionStatus(newValue));
         connectionStatusLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: black;");
         connectionStatusBox.setStyle("-fx-background-color: red; -fx-padding: 2;");
         this.resourceBundle = ResourceBundle.getBundle("html_content", Locale.getDefault());
@@ -96,10 +100,10 @@ public class MainScreenController implements Initializable {
     }
 
     @FXML
-    protected void handleMenuAction(ActionEvent event){
+    protected void handleMenuAction(ActionEvent event) {
         MenuItem source = (MenuItem) event.getSource();
         String itemId = source.getId();
-        switch(itemId) {
+        switch (itemId) {
             case "startMonitor":
                 handleStartMonitor();
                 break;
@@ -123,7 +127,8 @@ public class MainScreenController implements Initializable {
     @FXML
     private void handleSettings() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/org/medusa/intentmonitor/settings_dialog.fxml"));
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/org/medusa/intentmonitor/settings_dialog.fxml"));
             VBox page = loader.load();
 
             Stage dialogStage = new Stage();
@@ -154,7 +159,8 @@ public class MainScreenController implements Initializable {
                 String flags = String.format("0x%08X", (int) intent.get("flags"));
                 Pattern pattern = Pattern.compile("cmp=([^\\s]+)");
                 String bundleString = (String) intent.get("extras");
-                //String extrasToJson = bundleString;//MainScreenUtils.beautifyBundleString(MainScreenUtils.removeExtraNoise(bundleString));
+                // String extrasToJson = bundleString;
+                // MainScreenUtils.beautifyBundleString(MainScreenUtils.removeExtraNoise(bundleString));
 
                 Matcher matcher = pattern.matcher(description);
                 if (matcher.find()) {
@@ -168,27 +174,29 @@ public class MainScreenController implements Initializable {
                 WebEngine webEngine = webView.getEngine();
                 webEngine.loadContent(htmlContent);
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void handleExit(){
-        if(socketClient != null)
+    private void handleExit() {
+        if (socketClient != null)
             socketClient.closeSocket();
         Platform.exit();
     }
 
-    private void handleStartMonitor(){
+    private void handleStartMonitor() {
         try {
             socketClient.connect(serverAddress, serverPort);
         } catch (ConnectException e) {
-            ErrorHandler.handleExceptionWithMsg(e, "Please check if the server is up and running, and verify the server address and port.");
+            ErrorHandler.handleExceptionWithMsg(e,
+                    "Please check if the server is up and running, and verify the server address and port.");
         } catch (IOException e) {
-            ErrorHandler.handleExceptionWithMsg(e,"An unexpected I/O error occurred");}
+            ErrorHandler.handleExceptionWithMsg(e, "An unexpected I/O error occurred");
+        }
     }
 
-    private void handleStopMonitor(){
+    private void handleStopMonitor() {
         socketClient.closeSocket();
     }
 
@@ -198,9 +206,11 @@ public class MainScreenController implements Initializable {
             String description = intent.getString("description");
             String destinationPackage = intent.getString("targetPackageName");
             String destinationClassName = intent.getString("targetClassName");
+            String source = intent.getString("source");
             Boolean isExported = intent.getBoolean("targetIsExported");
             intentListWithFullInfo.add(newItem);
-            Platform.runLater(() -> intentsList.add(new IntentItem(intentListWithFullInfo.size() - 1, description, destinationPackage, destinationClassName, isExported)));
+            Platform.runLater(() -> intentsList.add(new IntentItem(intentListWithFullInfo.size() - 1, description,
+                    destinationPackage, destinationClassName, isExported, source)));
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -210,7 +220,7 @@ public class MainScreenController implements Initializable {
     private void updateConnectionStatus(boolean isConnected) {
         Platform.runLater(() -> {
             if (isConnected) {
-                connectionStatusLabel.setText("Connected to "+serverAddress+":"+serverPort);
+                connectionStatusLabel.setText("Connected to " + serverAddress + ":" + serverPort);
                 connectionStatusBox.setStyle("-fx-background-color: green; -fx-padding: 2;");
             } else {
                 connectionStatusLabel.setText("Disconnected");
@@ -235,4 +245,3 @@ public class MainScreenController implements Initializable {
         this.serverPort = serverPort;
     }
 }
-
