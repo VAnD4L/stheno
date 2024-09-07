@@ -9,10 +9,10 @@ let printBacktrace=function (){
   });
 };
 
-function dumpIntent(intent){
+function dumpIntent(intent, source) {
     try{
         if(!intent.hasExtra("marked_as_dumped")){
-            sendIntentToMonitor(intent)
+            sendIntentToMonitor(intent, source)
             intent.putExtra("marked_as_dumped","marked");
         }
     } catch(error){
@@ -20,7 +20,7 @@ function dumpIntent(intent){
     }
 }
 
-function sendIntentToMonitor(intent){
+function sendIntentToMonitor(intent, source){
     try{
         let bundle_clz = intent.getExtras();
         let data = intent.getData();
@@ -68,7 +68,7 @@ function sendIntentToMonitor(intent){
       
         let sentData = JSON.stringify({"description":intent.toString(), "targetPackageName":targetPackage, 
             "targetClassName":targetClassName, "action":action, "data":dataToString, "type":type, "flags":flags, 
-            "extras":extras, "targetIsExported":exported});
+            "extras":extras, "targetIsExported":exported, "source":source});
 
           send('IntentMsg|'+sentData);
 
@@ -99,18 +99,18 @@ Java.perform(function() {
     let activity = Java.use('android.app.Activity');
 
     activity.onNewIntent.overload('android.content.Intent').implementation = function(intent){
-        dumpIntent(intent);   
+        dumpIntent(intent,"onNewIntent");   
         this.onNewIntent(intent);
      }
 
     activity.startActivity.overload('android.content.Intent', 'android.os.Bundle').implementation = function(intent, bundle){
-        dumpIntent(intent);   
+        dumpIntent(intent,"startActivity");   
         this.startActivity(intent, bundle);
     }
 
     activity.startActivities.overload('[Landroid.content.Intent;', 'android.os.Bundle').implementation = function(intents, bundle){
         for (let i = 0; i < intents.length; i++) {
-            dumpIntent(intents[i]);  
+            dumpIntent(intents[i],"startActivities");  
         }
         this.startActivities(intents, bundle);
     }
@@ -118,18 +118,18 @@ Java.perform(function() {
 
     activity.startActivityForResult.overload('android.content.Intent', 'int', 'android.os.Bundle').implementation = function(intent, requestCode, bundle){
         if( requestCode != -1){
-            dumpIntent(intent);
+            dumpIntent(intent,"startActivityForResult");
         }
         this.startActivityForResult(intent,requestCode, bundle);
     }
 
     activity.startActivityIfNeeded.overload('android.content.Intent', 'int', 'android.os.Bundle').implementation = function(intent, requestCode, bundle){
-        dumpIntent(intent);
+        dumpIntent(intent,"startActivityIfNeeded");
         this.startActivityIfNeeded(intent, requestCode, bundle);
     }
 
     activity.setResult.overload('int','android.content.Intent').implementation = function(requestCode,intent){
-        dumpIntent(intent);
+        dumpIntent(intent,"setResult");
         this.setResult(requestCode,intent);
     }
 
@@ -185,7 +185,7 @@ Java.perform(function() {
                         if (!isDumping && !this.hasExtra("marked_as_dumped")) {
                             try {
                                 isDumping = true;
-                                dumpIntent(this);
+                                dumpIntent(this,"hookIntentGetMethod");
                                 this.putExtra("marked_as_dumped", "marked");
                             } catch (copyError) {
                                 console.log("Error creating or dumping Intent copy: " + copyError);
